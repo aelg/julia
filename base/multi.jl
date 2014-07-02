@@ -1118,7 +1118,7 @@ function launch_local_workers(cman::LocalManager, np::Integer, config::Dict)
 
     # start the processes first...
     for i in 1:np
-        io, pobj = open(detach(`$(dir)/$(exename) --bind-to $(LPROC.bind_addr) $exeflags`), "r")
+        io, pobj = open(detach(`$(dir)/$(exename) $exeflags --bind-to $(LPROC.bind_addr)`), "r")
         io_objs[i] = io
         configs[i] = merge(config, {:process => pobj})
     end
@@ -1202,6 +1202,14 @@ function manage_ssh_worker(id::Integer, config::Dict, op::Symbol)
     end
 end
 
+# Get default exeflags for workers launched by this process
+function default_exeflags()
+    bounds = ccall(:jl_check_bounds, Int8, ())
+    bounds == 1 ? `--check-bounds=yes` :
+    bounds == 2 ? `--check-bounds=no` :
+    ``
+end
+
 # start and connect to processes via SSH.
 # optionally through an SSH tunnel.
 # the tunnel is only used from the head (process 1); the nodes are assumed
@@ -1209,7 +1217,7 @@ end
 function addprocs_internal(np::Integer;
                   tunnel=false, dir=JULIA_HOME,
                   exename=(ccall(:jl_is_debugbuild,Cint,())==0?"./julia":"./julia-debug"),
-                  sshflags::Cmd=``, cman=LocalManager(), exeflags=``)
+                  sshflags::Cmd=``, cman=LocalManager(), exeflags=default_exeflags())
                   
     config={:dir=>dir, :exename=>exename, :exeflags=>`$exeflags --worker`, :tunnel=>tunnel, :sshflags=>sshflags}
     disable_threaded_libs()

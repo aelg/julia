@@ -696,6 +696,11 @@ DLLEXPORT void jl_raise_debugger(void)
 #endif // _OS_WINDOWS_
 }
 
+DLLEXPORT int8_t jl_check_bounds(void)
+{
+    return jl_compileropts.check_bounds;
+}
+
 #ifdef __cplusplus
 }
 #endif
